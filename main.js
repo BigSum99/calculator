@@ -66,10 +66,8 @@ $(document).ready(function() {
         }
 
         operator = $(this).data('value');
-        input = ''; 
-        updateDisplay();
+        input = '';
     });
-
     $('#equal').on('click', function() {
         if (input === '' || operator === '') return; //入力がない場合処理を無視
 
