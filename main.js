@@ -1,98 +1,109 @@
-$(document).ready(function() {
+$(document).ready(function () {
     let display = $('#display');
-    let input = ''
-    let operator = '';
-    let firstNumber = null;
-    
-    //ディスプレイの更新
+    let input = '';
+    let lastOperator = false;
+    let negative = false;
+    // ディスプレイの更新
     function updateDisplay() {
         display.val(input);
     }
 
-    //計算関数
-    function calculate(a, b, op) {
-        switch (op) {
-            case '+': return a + b;
-            case '-': return a - b;
-            case '*': return a * b;
-            case '/': 
-            if(b === 0) {   //0で割れないように制限
-                alert('0で割ることはできません');
-                return a;
-            } else {
-                return a / b;
-            }
-            default: return b;
+    // 計算関数(new)
+    function evaluateExpression() {
+        try {
+            return eval(input);
+        } catch (e) {
+            alert("無効な計算式です");
+            return input;
         }
     }
 
     // 数字をクリックしたとき
-    $('.num').on('click', function() {
+    $('.num').on('click', function () {
         let value = $(this).data('value');
 
-        // 00の入力制限
-        if (value ==='00') {
-            if (input  === '0' || input === '') return; //0が入力されているか、何も入力されていない場合に処理を無視。
+        // 00の制限
+        if (value === '00') {
+            if (input === '') return;
+            if (lastOperator) return;
         }
-        //0の入力制限
-        if (value === '0' && input === '0' && !input.includes('.')) return; //０がすでに入力されていて、小数点を含まない場合に処理を無視
-        if (input === '0' && value !== '0') {   //0が入力されていて、次に違う値が入力されたとき
-            input = ''; //0をなかったことにする
-        } 
-        // .の入力制限
+
+        // ０の制限
+        if (input.endsWith('0') && !input.includes('.') && value !== '.' && value !== '0') {
+            input = input.slice(0, -1); // 最後が０の場合に新たな数字に置き換え
+        } else if (value === '0') return;
+        if (input === '0' && value !== '0' && value !== '.') {
+            input = '';
+        }
+
+        // 小数点の制限
         if (value === '.') {
-            if (input === '') { //何も入力されてない場合
-                input = '0.';   //0.に置き換える
-                updateDisplay();
-            } else if (!input.includes('.')) { 
-                input += value;    //.を含んでいない場合のみ.を加える
-                updateDisplay();   
+            if (input === '') {
+                input = '0'
             }
+            if (lastOperator) return;
+        }
+
+        // 小数点が同じ数値で使われないように
+        const currentNumber = input.split(/[\+\-\*\/]/).pop();
+        if (value === '.' && currentNumber.includes('.')) {
             return;
         }
-        //それ以外の場合の処理
+
+        lastOperator = false;
         input += value;
         updateDisplay();
     });
 
-    // 演算子が入力されたとき
-    $('.op').on('click', function() {
-        if (input === '' && operator === '') return; // 入力がない場合は何もしない
-
-        if (firstNumber === null) { //firstNumberの値が空の場合
-            firstNumber = parseFloat(input);    //最初の入力を数値として設定
-        } else {    //２回目以降の場合
-            firstNumber = calculate(firstNumber, parseFloat(input), operator);  //計算結果から続けて計算を行うために
+    // 演算子をクリックしたときの処理
+    $('.op').on('click', function () {
+        let value = $(this).data('value');
+        if (input === '' && value === '-') {
+            input += value;
+            updateDisplay();
+            return;
+        }
+        if (input === '-') return;
+        if (input !== '' && !lastOperator) {
+            input += value;
+            updateDisplay();
+            lastOperator = true;
+            return;
+        }
+        //マイナスが続いた時の処理
+        if (lastOperator) {
+            if (value === '-' && input.endsWith('-')) {
+                input = input.slice(0, -1); // 直前のマイナスを削除
+                input += '+'; // プラスに置き換える
+                updateDisplay();
+                return;
+            }
+        }
+        if (lastOperator && !negative && value === '-') {
+            negative = true;
+            input += value;
+            updateDisplay();
+            return;
         }
 
-        operator = $(this).data('value');
-        input = '';
-    });
-    $('#equal').on('click', function() {
-        if (input === '' || operator === '') return; //入力がない場合処理を無視
 
-        firstNumber = calculate(firstNumber, parseFloat(input), operator);  //計算の実行
-        input = firstNumber.toString(); //文字列化して代入
-        operator = '';
+    });
+
+    //イコールをクリックしたとき
+    $('#equal').on('click', function () {
+        if (input === '') return;
+        let result = evaluateExpression();
+        input = result.toString();
         updateDisplay();
+        lastOperator = false;
+        negative = false;
     });
 
-    //ACボタンをクリックしたとき
-    $('#clear').on('click', function() {
+    // AC ボタンをクリックしたとき
+    $('#clear').on('click', function () {
         input = '';
-        firstNumber = null;
-        operator = '';
-        updateDisplay();
-    });
-
-    $('#negate').on('click', function() {
-        if (input === '') return; 
-
-        if (input.startsWith('-')) {
-            input = input.substring(1); // マイナスを削除
-        } else {
-            input = '-' + input; // マイナスを追加
-        }
+        lastOperator = false;
+        negative = false;
         updateDisplay();
     });
 
