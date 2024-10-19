@@ -2,6 +2,7 @@ $(document).ready(function () {
     let display = $('#display');
     let input = '';
     let lastOperator = false;
+    let negative = false;
     // ディスプレイの更新
     function updateDisplay() {
         display.val(input);
@@ -20,18 +21,23 @@ $(document).ready(function () {
     // 数字をクリックしたとき
     $('.num').on('click', function () {
         let value = $(this).data('value');
-
+        const currentNumber = input.split(/[\+\-\*\/]/).pop();
         // 00の制限
         if (value === '00') {
-            if (input === '') return;
-            if (lastOperator) return;
+            if (currentNumber === '' || currentNumber === '0' || lastOperator && !currentNumber.includes('.')) return;
         }
 
         // ０の制限
-        if (input.endsWith('0') && !input.includes('.') && value !== '.' && value !== '0') {
-            input = input.slice(0, -1); // 最後が０の場合に新たな数字に置き換え
-        } else if (value === '0') return;
-        if (input === '0' && value !== '0' && value !== '.') {
+        if (value == '0') {
+            if (currentNumber === '' && lastOperator) {
+                input += '0.';
+                updateDisplay();
+                return;
+            }
+            if (currentNumber === '0' && !currentNumber.includes('.')) return;
+        }
+
+        if (input === '0' && value !== '0') {
             input = '';
         }
 
@@ -44,7 +50,7 @@ $(document).ready(function () {
         }
 
         // 小数点が同じ数値で使われないように
-        const currentNumber = input.split(/[\+\-\*\/]/).pop();
+
         if (value === '.' && currentNumber.includes('.')) {
             return;
         }
@@ -60,21 +66,20 @@ $(document).ready(function () {
         if (input === '' && value === '-') {
             input += value;
             updateDisplay();
+            lastOperator = true;
             return;
         }
         if (input === '-') return;
+        if (input.endsWith('.')) return;
         if (input !== '' && !lastOperator) {
             input += value;
             updateDisplay();
             lastOperator = true;
             return;
         }
-        
-        //演算子の更新
+
         if (lastOperator) {
-            input = input.slice(0 , -1);
-            input += value;
-            updateDisplay();
+            return;
         }
 
     });
