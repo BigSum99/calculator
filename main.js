@@ -2,7 +2,6 @@ $(document).ready(function () {
     let display = $('#display');
     let input = '';
     let lastOperator = false;
-    let negative = false;
     // ディスプレイの更新
     function updateDisplay() {
         display.val(input);
@@ -70,22 +69,13 @@ $(document).ready(function () {
             lastOperator = true;
             return;
         }
-        //マイナスが続いた時の処理
+        
+        //演算子の更新
         if (lastOperator) {
-            if (value === '-' && input.endsWith('-')) {
-                input = input.slice(0, -1); // 直前のマイナスを削除
-                input += '+'; // プラスに置き換える
-                updateDisplay();
-                return;
-            }
-        }
-        if (lastOperator && !negative && value === '-') {
-            negative = true;
+            input = input.slice(0 , -1);
             input += value;
             updateDisplay();
-            return;
         }
-
 
     });
 
